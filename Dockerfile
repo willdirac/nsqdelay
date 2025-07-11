@@ -1,25 +1,34 @@
-FROM golang:1.3.3
+FROM golang:1.21-alpine AS builder
 
-# install libsqlite3-dev
-RUN echo "deb http://ftp.debian.org/debian jessie-backports main contrib non-free" >> /etc/apt/sources.list
-RUN apt-get update; apt-get install -y libsqlite3-dev
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev sqlite-dev
 
-# install godep
-RUN go get github.com/tools/godep
+# Set working directory
+WORKDIR /build
 
-# copy source code
-ADD . /go/src/github.com/bsphere/nsqdelay
+# Copy go mod files
+COPY go.mod go.sum ./
 
-# install godep dependencies
-WORKDIR /go/src/github.com/bsphere/nsqdelay
+# Download dependencies
+RUN go mod download
 
-RUN godep restore
+# Copy source code
+COPY . .
 
-WORKDIR /go
+# Build the application
+RUN go build -o nsqdelay .
 
-# build and install the source code
-RUN go install github.com/bsphere/nsqdelay
+# Final stage
+FROM alpine:latest
 
+# Install runtime dependencies
+RUN apk add --no-cache sqlite-libs
+
+# Copy binary from builder
+COPY --from=builder /build/nsqdelay /usr/local/bin/nsqdelay
+
+# Create data volume
 VOLUME ["/data"]
 
-ENTRYPOINT ["/go/bin/nsqdelay"]
+# Set entrypoint
+ENTRYPOINT ["nsqdelay"]

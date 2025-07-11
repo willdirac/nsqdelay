@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	_ "code.google.com/p/gosqlite/sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/augurysys/timestamp"
-	"github.com/bitly/go-nsq"
+	"github.com/nsqio/go-nsq"
 )
 
 // DelayedMessage represents a data structure for publishing delayed messages
